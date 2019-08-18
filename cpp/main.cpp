@@ -60,14 +60,17 @@ static int handleSubcommand(const string& subcommand, int argc, const char* argv
     return MainCmds::benchmark(argc-1,&argv[1]);
   if(subcommand == "evalsgf")
     return MainCmds::evalsgf(argc-1,&argv[1]);
+  #if !defined(__EMSCRIPTEN__)
   else if(subcommand == "gatekeeper")
     return MainCmds::gatekeeper(argc-1,&argv[1]);
+  #endif
   else if(subcommand == "gtp")
     return MainCmds::gtp(argc-1,&argv[1]);
   else if(subcommand == "tuner")
     return MainCmds::tuner(argc-1,&argv[1]);
   else if(subcommand == "match")
     return MainCmds::match(argc-1,&argv[1]);
+  #if !defined(__EMSCRIPTEN__)
   else if(subcommand == "matchauto")
     return MainCmds::matchauto(argc-1,&argv[1]);
   else if(subcommand == "selfplay")
@@ -88,6 +91,7 @@ static int handleSubcommand(const string& subcommand, int argc, const char* argv
     return MainCmds::runselfplayinittests(argc-1,&argv[1]);
   else if(subcommand == "runnnonmanyposestest")
     return MainCmds::runnnonmanyposestest(argc-1,&argv[1]);
+  #endif
   else if(subcommand == "lzcost")
     return MainCmds::lzcost(argc-1,&argv[1]);
   else if(subcommand == "demoplay")
@@ -147,7 +151,6 @@ int main(int argc, const char* argv[]) {
   return handleSubcommand(cmdArg, argc, argv);
 #endif
 }
-
 
 string Version::getKataGoVersion() {
   return string("1.2");

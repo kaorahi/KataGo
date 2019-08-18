@@ -48,10 +48,11 @@ out.txt
 .idea
 
 # For cmake
-CMakeCache.txt
-CMakeFiles/
-Makefile
-cmake_install.cmake
+cpp/CMakeCache.txt
+cpp/CMakeFiles/
+cpp/Makefile
+cpp/cmake_install.cmake
+em_build/
 
 .DS_Store
 GPATH

@@ -160,13 +160,6 @@ vector<NNEvaluator*> Setup::initializeNNEvaluators(
         gpuIdxByServerThread.push_back(-1);
     }
 
-    string openCLTunerFile;
-    if(cfg.contains("openclTunerFile"))
-      openCLTunerFile = cfg.getString("openclTunerFile");
-    bool openCLReTunePerBoardSize = false;
-    if(cfg.contains("openclReTunePerBoardSize"))
-      openCLReTunePerBoardSize = cfg.getBool("openclReTunePerBoardSize");
-
     vector<int> gpuIdxs = gpuIdxByServerThread;
     std::sort(gpuIdxs.begin(), gpuIdxs.end());
     std::unique(gpuIdxs.begin(), gpuIdxs.end());
@@ -205,6 +198,7 @@ vector<NNEvaluator*> Setup::initializeNNEvaluators(
       nnModelName,
       nnModelFile,
       gpuIdxs,
+      cfg,
       &logger,
       modelFileIdx,
       cfg.getInt("nnMaxBatchSize", 1, 65536),
@@ -216,9 +210,7 @@ vector<NNEvaluator*> Setup::initializeNNEvaluators(
       cfg.getInt("nnCacheSizePowerOfTwo", -1, 48),
       cfg.getInt("nnMutexPoolSizePowerOfTwo", -1, 24),
       debugSkipNeuralNet,
-      nnPolicyTemperature,
-      openCLTunerFile,
-      openCLReTunePerBoardSize
+      nnPolicyTemperature
     );
 
     int defaultSymmetry = forcedSymmetry >= 0 ? forcedSymmetry : 0;

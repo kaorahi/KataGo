@@ -78,6 +78,11 @@ if(BUILD_MCTS)
       neuralnet/openclhelpers.cpp
       neuralnet/opencltuner.cpp
       )
+  elseif(USE_BACKEND STREQUAL "TFJS")
+    message("-DUSE_BACKEND=TFJS, using TensorFlow.js backend")
+    set(NEURALNET_BACKEND_SOURCES
+      neuralnet/tfjsbackend.cpp
+      )
   elseif(USE_BACKEND STREQUAL "")
     message(WARNING "${ColorBoldRed}WARNING: Using dummy neural net backend, intended for non-neural-net testing only, will fail on any code path requiring a neural net. To use neural net, specify -DUSE_BACKEND=CUDA or -DUSE_BACKEND=OPENCL to compile with the respective backend.${ColorReset}")
     set(NEURALNET_BACKEND_SOURCES neuralnet/dummybackend.cpp)
@@ -183,71 +188,141 @@ endif()
 #------------------------------------------------------------------------------------
 
 if(BUILD_MCTS)
-  add_executable(katago
-    core/global.cpp
-    core/config_parser.cpp
-    core/datetime.cpp
-    core/elo.cpp
-    core/fancymath.cpp
-    core/hash.cpp
-    core/logger.cpp
-    core/makedir.cpp
-    core/md5.cpp
-    core/multithread.cpp
-    core/rand.cpp
-    core/rand_helpers.cpp
-    core/sha2.cpp
-    core/test.cpp
-    core/threadsafequeue.cpp
-    core/timer.cpp
-    game/board.cpp
-    game/rules.cpp
-    game/boardhistory.cpp
-    dataio/sgf.cpp
-    dataio/numpywrite.cpp
-    dataio/trainingwrite.cpp
-    dataio/loadmodel.cpp
-    dataio/lzparse.cpp
-    dataio/homedata.cpp
-    neuralnet/nninputs.cpp
-    neuralnet/modelversion.cpp
-    neuralnet/nneval.cpp
-    neuralnet/desc.cpp
-    ${NEURALNET_BACKEND_SOURCES}
-    search/timecontrols.cpp
-    search/searchparams.cpp
-    search/mutexpool.cpp
-    search/search.cpp
-    search/asyncbot.cpp
-    search/distributiontable.cpp
-    search/analysisdata.cpp
-    program/setup.cpp
-    program/play.cpp
-    ${GIT_HEADER_FILE_ALWAYS_UPDATED}
-    tests/testboardarea.cpp
-    tests/testboardbasic.cpp
-    tests/testrules.cpp
-    tests/testscore.cpp
-    tests/testsgf.cpp
-    tests/testnninputs.cpp
-    tests/testsearch.cpp
-    tests/testtime.cpp
-    tests/testtrainingwrite.cpp
-    tests/testnn.cpp
-    benchmark.cpp
-    evalsgf.cpp
-    gatekeeper.cpp
-    gtp.cpp
-    match.cpp
-    matchauto.cpp
-    selfplay.cpp
-    misc.cpp
-    runtests.cpp
-    lzcost.cpp
-    sandbox.cpp
-    tune.cpp
-    main.cpp
-    )
+  if (USE_BACKEND STREQUAL "TFJS")
+    add_executable(katago
+      core/global.cpp
+      core/config_parser.cpp
+      core/datetime.cpp
+      core/elo.cpp
+      core/fancymath.cpp
+      core/hash.cpp
+      core/logger.cpp
+      core/makedir.cpp
+      core/md5.cpp
+      core/multithread.cpp
+      core/rand.cpp
+      core/rand_helpers.cpp
+      core/sha2.cpp
+      core/test.cpp
+      core/threadsafequeue.cpp
+      core/timer.cpp
+      game/board.cpp
+      game/rules.cpp
+      game/boardhistory.cpp
+      dataio/sgf.cpp
+      dataio/numpywrite.cpp
+      dataio/trainingwrite.cpp
+      #dataio/loadmodel.cpp # needs boost/filesystem
+      #dataio/lzparse.cpp
+      #dataio/homedata.cpp
+      neuralnet/nninputs.cpp
+      neuralnet/modelversion.cpp
+      neuralnet/nneval.cpp
+      neuralnet/desc.cpp
+      ${NEURALNET_BACKEND_SOURCES}
+      search/timecontrols.cpp
+      search/searchparams.cpp
+      search/mutexpool.cpp
+      search/search.cpp
+      search/asyncbot.cpp
+      search/distributiontable.cpp
+      search/analysisdata.cpp
+      program/setup.cpp
+      program/play.cpp
+      ${GIT_HEADER_FILE_ALWAYS_UPDATED}
+      tests/testboardarea.cpp
+      tests/testboardbasic.cpp
+      tests/testrules.cpp
+      tests/testscore.cpp
+      tests/testsgf.cpp
+      tests/testnninputs.cpp
+      #tests/testsearch.cpp # TODO need to update NNEvaluator
+      tests/testtime.cpp
+      #tests/testtrainingwrite.cpp # TODO need to update NNEvaluator
+      tests/testnn.cpp
+      benchmark.cpp
+      evalsgf.cpp
+      #gatekeeper.cpp # needs dataio/loadmodel.cpp
+      gtp.cpp
+      match.cpp
+      #matchauto.cpp
+      #selfplay.cpp # needs dataio/loadmodel.cpp
+      misc.cpp
+      #runtests.cpp
+      lzcost.cpp
+      sandbox.cpp
+      tune.cpp
+      main.cpp
+      pre.js
+      tfjs_api.js
+      )
+  else()
+    add_executable(katago
+      core/global.cpp
+      core/config_parser.cpp
+      core/datetime.cpp
+      core/elo.cpp
+      core/fancymath.cpp
+      core/hash.cpp
+      core/logger.cpp
+      core/makedir.cpp
+      core/md5.cpp
+      core/multithread.cpp
+      core/rand.cpp
+      core/rand_helpers.cpp
+      core/sha2.cpp
+      core/test.cpp
+      core/threadsafequeue.cpp
+      core/timer.cpp
+      game/board.cpp
+      game/rules.cpp
+      game/boardhistory.cpp
+      dataio/sgf.cpp
+      dataio/numpywrite.cpp
+      dataio/trainingwrite.cpp
+      dataio/loadmodel.cpp
+      dataio/lzparse.cpp
+      dataio/homedata.cpp
+      neuralnet/nninputs.cpp
+      neuralnet/modelversion.cpp
+      neuralnet/nneval.cpp
+      neuralnet/desc.cpp
+      ${NEURALNET_BACKEND_SOURCES}
+      search/timecontrols.cpp
+      search/searchparams.cpp
+      search/mutexpool.cpp
+      search/search.cpp
+      search/asyncbot.cpp
+      search/distributiontable.cpp
+      search/analysisdata.cpp
+      program/setup.cpp
+      program/play.cpp
+      ${GIT_HEADER_FILE_ALWAYS_UPDATED}
+      tests/testboardarea.cpp
+      tests/testboardbasic.cpp
+      tests/testrules.cpp
+      tests/testscore.cpp
+      tests/testsgf.cpp
+      tests/testnninputs.cpp
+      tests/testsearch.cpp
+      tests/testtime.cpp
+      tests/testtrainingwrite.cpp
+      tests/testnn.cpp
+      benchmark.cpp
+      evalsgf.cpp
+      gatekeeper.cpp
+      gtp.cpp
+      match.cpp
+      matchauto.cpp
+      selfplay.cpp
+      misc.cpp
+      runtests.cpp
+      lzcost.cpp
+      sandbox.cpp
+      tune.cpp
+      main.cpp
+      )
+  endif()
 
   if(USE_BACKEND STREQUAL "CUDA")
     target_compile_definitions(katago PRIVATE USE_CUDA_BACKEND)
@@ -265,17 +340,21 @@ if(BUILD_MCTS)
     include_directories(${OpenCL_INCLUDE_DIRS})
     link_directories(${OpenCL_LIBRARY})
     target_link_libraries (katago ${OpenCL_LIBRARY})
+  elseif(USE_BACKEND STREQUAL "TFJS")
+    target_compile_definitions(katago PRIVATE USE_TFJS_BACKEND)
   endif()
 
   if(NO_GIT_REVISION)
     target_compile_definitions(katago PRIVATE NO_GIT_REVISION)
   endif()
 
-  find_package(ZLIB REQUIRED)
-  if(ZLIB_FOUND)
-    include_directories(${ZLIB_INCLUDE_DIRS})
-    target_link_libraries(katago ${ZLIB_LIBRARIES})
-  endif(ZLIB_FOUND)
+  if(NOT USE_BACKEND STREQUAL "TFJS")
+    find_package(ZLIB REQUIRED)
+    if(ZLIB_FOUND)
+      include_directories(${ZLIB_INCLUDE_DIRS})
+      target_link_libraries(katago ${ZLIB_LIBRARIES})
+    endif(ZLIB_FOUND)
+  endif()
 
   find_library(LIBZIP_LIBRARY NAMES zip)
   find_path(LIBZIP_INCLUDE_DIR_ZIP NAMES zip.h)
@@ -292,13 +371,15 @@ if(BUILD_MCTS)
   if(Boost_USE_STATIC_LIBS_ON)
     set(Boost_USE_STATIC_LIBS ON)
   endif()
-  find_package(Boost COMPONENTS system filesystem REQUIRED)
-  include_directories(${Boost_INCLUDE_DIRS})
-  target_link_libraries(katago ${Boost_FILESYSTEM_LIBRARY} ${Boost_SYSTEM_LIBRARY})
-  # Getting boost to work on MSVC seems to require forcing it to link
-  # with dlls instead of static, and needs this option
-  if(MSVC AND (NOT Boost_USE_STATIC_LIBS_ON))
-    target_compile_definitions(katago PRIVATE BOOST_ALL_DYN_LINK)
+  if(NOT USE_BACKEND STREQUAL "TFJS")
+    find_package(Boost COMPONENTS system filesystem REQUIRED)
+    include_directories(${Boost_INCLUDE_DIRS})
+    target_link_libraries(katago ${Boost_FILESYSTEM_LIBRARY} ${Boost_SYSTEM_LIBRARY})
+    # Getting boost to work on MSVC seems to require forcing it to link
+    # with dlls instead of static, and needs this option
+    if(MSVC AND (NOT Boost_USE_STATIC_LIBS_ON))
+      target_compile_definitions(katago PRIVATE BOOST_ALL_DYN_LINK)
+    endif()
   endif()
 
   if(USE_TCMALLOC)
@@ -314,8 +395,15 @@ if(BUILD_MCTS)
     target_compile_definitions(katago PRIVATE BIG_ENDIAN=4321)
     # core/rand.cpp uses winsock for a gethostname
     target_link_libraries(katago ws2_32)
-
+    
     set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} /STACK:8388608")
+  endif()
+
+  # for emcc
+  if(USE_BACKEND STREQUAL "TFJS")
+    target_compile_definitions(katago PRIVATE BYTE_ORDER=1234)
+    target_compile_definitions(katago PRIVATE LITTLE_ENDIAN=1234)
+    target_compile_definitions(katago PRIVATE BIG_ENDIAN=4321)
   endif()
 
   # On g++ it seems like we need to explicitly link threads as well.
@@ -344,6 +432,25 @@ if(CMAKE_COMPILER_IS_GNUCC)
   else()
     set(CMAKE_CXX_FLAGS  "${CMAKE_CXX_FLAGS} -g -O2 -pedantic -Wall -Wextra -Wno-sign-compare -Wcast-align -Wcast-qual -Wctor-dtor-privacy -Wdisabled-optimization -Wformat=2 -Wlogical-op -Wmissing-declarations -Wmissing-include-dirs -Wnoexcept -Woverloaded-virtual -Wredundant-decls -Wshadow -Wstrict-null-sentinel -Wstrict-overflow=1 -Wswitch-default -Wfloat-conversion -Wnull-dereference -Wunused -Walloc-zero -Wduplicated-branches -Wduplicated-cond -Wdangling-else -Wrestrict")
   endif()
+endif()
+
+if(USE_BACKEND STREQUAL "TFJS")
+    #set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Werror")
+    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11")
+    #set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -s ASSERTIONS")
+    #set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -s SAFE_HEAP=1")
+
+    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -s ASYNCIFY=1 -s 'ASYNCIFY_IMPORTS=[\"setBackend\", \"downloadModel\", \"waitForStdin\", \"predict\"]' -O3")
+    set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -s ASYNCIFY=1 -s 'ASYNCIFY_IMPORTS=[\"setBackend\", \"downloadModel\", \"waitForStdin\", \"predict\"]' -O3")
+
+    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -s USE_PTHREADS=1") # You need wasm to use pthreads with latest-upstream.
+    set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -s USE_PTHREADS=1")
+
+    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -s ALLOW_MEMORY_GROWTH=1 -s WASM_MEM_MAX=1999MB")
+    set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -s ALLOW_MEMORY_GROWTH=1 -s WASM_MEM_MAX=1999MB")
+
+    set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -s DEMANGLE_SUPPORT=1")
+    set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} --pre-js ${CMAKE_SOURCE_DIR}/pre.js --js-library ${CMAKE_SOURCE_DIR}/tfjs_api.js")
 endif()
 
 target_include_directories(katago PUBLIC ${CMAKE_CURRENT_BINARY_DIR})

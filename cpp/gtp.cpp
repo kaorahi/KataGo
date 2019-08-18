@@ -10,6 +10,13 @@
 #define TCLAP_NAMESTARTSTRING "-" //Use single dashes for all flags
 #include <tclap/CmdLine.h>
 
+#if defined(__EMSCRIPTEN__)
+extern "C" {
+  extern void notifyStatus(int);
+  extern void waitForStdin();
+}
+#endif
+
 using namespace std;
 
 static const vector<string> knownCommands = {
@@ -822,10 +829,17 @@ int MainCmds::gtp(int argc, const char* const* argv) {
     cerr << "Loaded model " << nnModelFile << endl;
     cerr << "GTP ready, beginning main protocol loop" << endl;
   }
+  #if defined(__EMSCRIPTEN__)
+  // TODO - waiting for finishing loading the weight on nnEvalThread.
+  notifyStatus(1);
+  #endif
 
   bool currentlyAnalyzing = false;
   string line;
   while(cin) {
+    #if defined(__EMSCRIPTEN__)
+    waitForStdin();
+    #endif
     getline(cin,line);
 
     //Parse command, extracting out the command itself, the arguments, and any GTP id number for the command.

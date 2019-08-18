@@ -4,6 +4,7 @@
 #include "../core/global.h"
 #include "../core/hash.h"
 #include "../core/logger.h"
+#include "../core/config_parser.h"
 #include "../neuralnet/desc.h"
 #include "../neuralnet/nninputs.h"
 
@@ -47,11 +48,10 @@ namespace NeuralNet {
     //The indices of all gpus that this context will be used for.
     //-1 as an entry indicates to select a default
     const std::vector<int>& gpuIdxs,
+    ConfigParser& cfg,
     Logger* logger,
     int nnXLen,
     int nnYLen,
-    std::string openCLTunerFile,
-    bool openCLReTunePerBoardSize,
     const LoadedModel* loadedModel
   );
   //A ComputeContext should NOT be freed until all ComputeHandles created using it have also been freed.

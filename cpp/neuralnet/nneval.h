@@ -78,6 +78,7 @@ class NNEvaluator {
     const std::string& modelName,
     const std::string& modelFileName,
     const std::vector<int>& gpuIdxs,
+    ConfigParser& cfg,
     Logger* logger,
     int modelFileIdx,
     int maxBatchSize,
@@ -89,9 +90,7 @@ class NNEvaluator {
     int nnCacheSizePowerOfTwo,
     int nnMutexPoolSizePowerofTwo,
     bool debugSkipNeuralNet,
-    float nnPolicyTemperature,
-    std::string openCLTunerFile,
-    bool openCLReTunePerBoardSize
+    float nnPolicyTemperature
   );
   ~NNEvaluator();
 

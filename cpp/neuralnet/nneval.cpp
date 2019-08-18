@@ -56,6 +56,7 @@ NNEvaluator::NNEvaluator(
   const string& mName,
   const string& mFileName,
   const vector<int>& gpuIdxs,
+  ConfigParser& cfg,
   Logger* logger,
   int modelFileIdx,
   int maxBatchSize,
@@ -67,9 +68,7 @@ NNEvaluator::NNEvaluator(
   int nnCacheSizePowerOfTwo,
   int nnMutexPoolSizePowerofTwo,
   bool skipNeuralNet,
-  float nnPolicyTemp,
-  string openCLTunerFile,
-  bool openCLReTunePerBoardSize
+  float nnPolicyTemp
 )
   :modelName(mName),
    modelFileName(mFileName),
@@ -123,7 +122,7 @@ NNEvaluator::NNEvaluator(
     loadedModel = NeuralNet::loadModelFile(modelFileName, modelFileIdx);
     modelVersion = NeuralNet::getModelVersion(loadedModel);
     inputsVersion = NNModelVersion::getInputsVersion(modelVersion);
-    computeContext = NeuralNet::createComputeContext(gpuIdxs,logger,nnXLen,nnYLen,openCLTunerFile,openCLReTunePerBoardSize,loadedModel);
+    computeContext = NeuralNet::createComputeContext(gpuIdxs,cfg,logger,nnXLen,nnYLen,loadedModel);
   }
   else {
     modelVersion = NNModelVersion::defaultModelVersion;

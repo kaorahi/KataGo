@@ -248,15 +248,21 @@ static ComputeContext* createComputeContextForTesting(
 
 ComputeContext* NeuralNet::createComputeContext(
   const std::vector<int>& gpuIdxs,
+  ConfigParser& cfg,
   Logger* logger,
   int nnXLen,
   int nnYLen,
-  string openCLTunerFile,
-  bool openCLReTunePerBoardSize,
   const LoadedModel* loadedModel
 ) {
   if(gpuIdxs.size() <= 0)
     throw StringError("NeuralNet::createComputeContext - specified no gpus to use");
+
+  string openCLTunerFile;
+  if(cfg.contains("openclTunerFile"))
+    openCLTunerFile = cfg.getString("openclTunerFile");
+  bool openCLReTunePerBoardSize = false;
+  if(cfg.contains("openclReTunePerBoardSize"))
+    openCLReTunePerBoardSize = cfg.getBool("openclReTunePerBoardSize");
 
   std::function<OpenCLTuneParams(const string&,int)> getParamsForDeviceName =
     [&openCLTunerFile,openCLReTunePerBoardSize,logger,nnXLen,nnYLen,loadedModel](const string& name, int gpuIdxForTuning) {
