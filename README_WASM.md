@@ -14,6 +14,7 @@ cd ../tfjs
 pip install tensorflow==1.13.1
 make saved_model/saved_model.pb
 pipenv install
+pipenv shell
 make
 cd ..
 ```
