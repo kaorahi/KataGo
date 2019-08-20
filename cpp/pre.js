@@ -198,22 +198,21 @@ if (!("preRun" in Module)) {
 }
 Module["preRun"].push(function() {
     var params = new URL(location).searchParams;
+    var cfgFile = params.get("config") || "gtp_cpu.cfg";
     FS.createPreloadedFile(
         FS.cwd(),
-        "gtp.cfg",
-        params.get("config") || "gtp_cpu.cfg",
+        cfgFile,
+        cfgFile,
         true, // 読み込み許可
         false // 書き込み許可
     );
     if (!("arguments" in Module)) {
         Module["arguments"] = [];
     }
-    Module["arguments"].push("gtp");
+    Module["arguments"].push(params.get("subcommand") || "gtp");
     Module["arguments"].push("-model");
-    var params = new URL(location).searchParams;
-    var model = params.get("model") || "web_model";
-    Module["arguments"].push(model);
+    Module["arguments"].push(params.get("model") || "web_model");
     Module["arguments"].push("-config");
-    Module["arguments"].push("gtp.cfg");
+    Module["arguments"].push(cfgFile);
 });
 
