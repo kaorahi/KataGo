@@ -12,15 +12,6 @@
     <textarea id="output" cols="30" rows="10" style="display:none;" placeholder="GTP output" disabled></textarea>
     <textarea id="log" cols="30" rows="10" style="width:100%;" placeholder="GTP output" disabled></textarea>
     <script type="text/javascript">
-    function doesSupportOffscreencanvas() {
-      const canvasTest = document.createElement('canvas');
-
-      return typeof canvasTest.transferControlToOffscreen === "function";
-    }
-    if (!doesSupportOffscreencanvas()) {
-      document.getElementById("backend-webgl").setAttribute("disabled", true);
-      document.getElementById("backend-cpu").setAttribute("selected", true);
-    }
     document.getElementById("output").addEventListener("message", function(event) {
       // process anything you want with GTP output
       event.currentTarget.value = "";
