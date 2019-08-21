@@ -34,7 +34,10 @@ http-server . # or your favorite one liner server
 ```
 
 ### Open Browser
-
+for auto detection of backend,
+```
+http://127.0.0.1:8080/?config=gtp_auto.cfg&model=web_model
+```
 for CPU backend,
 ```
 http://127.0.0.1:8080/?config=gtp_webgl.cfg&model=web_model

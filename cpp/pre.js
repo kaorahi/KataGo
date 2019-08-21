@@ -4,31 +4,37 @@ var GraphModelWrapper = function() {
     this.model = null;
 };
 
+GraphModelWrapper.prototype.AUTO = 0;
 GraphModelWrapper.prototype.CPU = 1;
 GraphModelWrapper.prototype.WEBGL = 2;
 
+GraphModelWrapper.prototype.getBackend = function() {
+    switch (tf.getBackend()) {
+        case "cpu":
+        return this.CPU;
+        case "webgl":
+        return this.WEBGL;
+        default:
+        return 0;
+    }
+}
+
 GraphModelWrapper.prototype.setBackend = function(backend) {
-    return Asyncify.handleSleep((function(wakeUp) {
-        var be;
-        switch (backend) {
-            case this.CPU:
-            be = "cpu";
-            break;
-            case this.WEBGL:
-            be = "webgl";
-            break;
-            default:
-            break;
-        }
-        tf.setBackend(be)
-            .then(function(result) {
-                wakeUp(result ? 1 : 0);
-            })
-            .catch(function(error) {
-                console.error(error);
-                wakeUp(0);
-            });
-    }).bind(this));
+    var be;
+    switch (backend) {
+        case this.AUTO:
+        be = typeof OffscreenCanvas !== 'undefined' ? "webgl" : "cpu";
+        break;
+        case this.CPU:
+        be = "cpu";
+        break;
+        case this.WEBGL:
+        be = "webgl";
+        break;
+        default:
+        return;
+    }
+    tf.setBackend(be);
 };
 
 GraphModelWrapper.prototype.downloadModel = function(charp) {
@@ -102,6 +108,7 @@ GraphModelWrapper.prototype.getModelVersion = function() {
 };
 
 if (Module['ENVIRONMENT_IS_PTHREAD']) {
+    importScripts("https://cdn.jsdelivr.net/npm/@tensorflow/tfjs/dist/tf.min.js");
     if (typeof OffscreenCanvas !== 'undefined') {
         self.document = {
             createElement: function() {
@@ -116,7 +123,6 @@ if (Module['ENVIRONMENT_IS_PTHREAD']) {
         self.HTMLVideoElement = function() {};
         self.HTMLImageElement = function() {};
         self.HTMLCanvasElement = OffscreenCanvas;
-        importScripts("https://cdn.jsdelivr.net/npm/@tensorflow/tfjs/dist/tf.min.js");
     } else {
         console.error("no offscreen canvas");
     }
@@ -199,7 +205,7 @@ if (!("preRun" in Module)) {
 Module["preRun"].push(function() {
     console.log("preRun");
     var params = new URL(location).searchParams;
-    var cfgFile = params.get("config") || "gtp_cpu.cfg";
+    var cfgFile = params.get("config") || "gtp_auto.cfg";
     FS.createPreloadedFile(
         FS.cwd(),
         cfgFile,

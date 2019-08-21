@@ -7,6 +7,7 @@
 #include "../neuralnet/desc.h"
 
 extern "C" {
+  extern int getBackend();
   extern int setBackend(int);
   extern int downloadModel(int);
   extern void removeModel();
@@ -17,17 +18,19 @@ extern "C" {
 using namespace std;
 
 struct ComputeContext {
-  int backend = 1; // cpu: 1, webgl: 2
+  int backend = 0; // auto: 0, cpu: 1, webgl: 2
 
   ComputeContext(ConfigParser& cfg, Logger* logger) {
     if(cfg.contains("tfjsBackend")) {
       string tfjsBackend = cfg.getString("tfjsBackend");
       logger->write(string("backend: ") + tfjsBackend);
-      if(tfjsBackend == "webgl") {
+      if(tfjsBackend == "cpu") {
+        backend = 1;
+      } else if(tfjsBackend == "webgl") {
         backend = 2;
       }
     } else {
-      logger->write("backend: cpu");
+      logger->write("backend: auto");
     }
   }
 };

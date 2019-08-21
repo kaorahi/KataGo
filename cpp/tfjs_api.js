@@ -24,12 +24,17 @@ mergeInto(LibraryManager.library, {
     $method_support__postset: 'method_support();',
     $method_support: function() {
         const inst = new GraphModelWrapper();
+        _getBackend = inst.getBackend.bind(inst);
         _setBackend = inst.setBackend.bind(inst);
         _downloadModel = inst.downloadModel.bind(inst);
         _removeModel = inst.removeModel.bind(inst);
         _predict = inst.predict.bind(inst);
         _jsGetModelVersion = inst.getModelVersion.bind(inst);
     },
+    getBackend: function() {
+        console.log("getBackend. should not reach");
+    },
+    getBackend__deps: ['$method_support'],
     setBackend: function() {
         console.log("setBackend. should not reach");
     },
