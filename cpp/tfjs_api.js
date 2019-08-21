@@ -7,17 +7,9 @@ mergeInto(LibraryManager.library, {
     $stdio_support__postset: 'stdio_support();',
     $stdio_support: function() {
         if (!Module['ENVIRONMENT_IS_PTHREAD']) {
-            const input = new Input();
-            const output = new Output();
-            if (!("preRun" in Module)) {
-                Module["preRun"] = [];
-            }
-            Module["preRun"].push(function() {
-                FS.init(input.callback.bind(input), output.callback.bind(output), null);
-            });
-            _waitForStdin = function() {
+           _waitForStdin = function() {
                 Asyncify.handleSleep(function(wakeUp) {
-                    input.wait().then(function() {
+                    Module["input"].wait().then(function() {
                         wakeUp();
                     });
                 });

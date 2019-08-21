@@ -197,6 +197,7 @@ if (!("preRun" in Module)) {
     Module["preRun"] = [];
 }
 Module["preRun"].push(function() {
+    console.log("preRun");
     var params = new URL(location).searchParams;
     var cfgFile = params.get("config") || "gtp_cpu.cfg";
     FS.createPreloadedFile(
@@ -214,5 +215,10 @@ Module["preRun"].push(function() {
     Module["arguments"].push(params.get("model") || "web_model");
     Module["arguments"].push("-config");
     Module["arguments"].push(cfgFile);
-});
 
+    var input = new Input();
+    var output = new Output();
+    FS.init(input.callback.bind(input), output.callback.bind(output), null);
+    Module["input"] = input;
+    Module["output"] = output;
+});
