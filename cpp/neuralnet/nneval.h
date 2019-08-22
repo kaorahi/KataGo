@@ -148,6 +148,10 @@ class NNEvaluator {
 
   void clearStats();
 
+  #if defined(__EMSCRIPTEN__)
+  int status = 0; // 0: init, 1: loading, 2: loaded, 3: failed
+  #endif
+
  private:
   std::string modelName;
   std::string modelFileName;

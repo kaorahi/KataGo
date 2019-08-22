@@ -440,8 +440,8 @@ if(USE_BACKEND STREQUAL "TFJS")
     #set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -s ASSERTIONS")
     #set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -s SAFE_HEAP=1")
 
-    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -s ASYNCIFY=1 -s 'ASYNCIFY_IMPORTS=[\"setBackend\", \"downloadModel\", \"waitForStdin\", \"predict\"]' -O3")
-    set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -s ASYNCIFY=1 -s 'ASYNCIFY_IMPORTS=[\"setBackend\", \"downloadModel\", \"waitForStdin\", \"predict\"]' -O3")
+    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -s ASYNCIFY=1 -s 'ASYNCIFY_IMPORTS=[\"emscripten_sleep\", \"setBackend\", \"downloadModel\", \"waitForStdin\", \"predict\"]' -O3")
+    set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -s ASYNCIFY=1 -s 'ASYNCIFY_IMPORTS=[\"emscripten_sleep\", \"setBackend\", \"downloadModel\", \"waitForStdin\", \"predict\"]' -O3")
 
     set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -s USE_PTHREADS=1") # You need wasm to use pthreads with latest-upstream.
     set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -s USE_PTHREADS=1")

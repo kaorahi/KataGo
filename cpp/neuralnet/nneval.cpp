@@ -262,6 +262,9 @@ void NNEvaluator::serve(
 ) {
 
   ComputeHandle* gpuHandle = NULL;
+  #if defined(__EMSCRIPTEN__)
+  status = 1;
+  #endif
   if(loadedModel != NULL)
     gpuHandle = NeuralNet::createComputeHandle(
       computeContext,
@@ -276,6 +279,14 @@ void NNEvaluator::serve(
       useFP16,
       useNHWC
     );
+
+  #if defined(__EMSCRIPTEN__)
+  if (gpuHandle != NULL) {
+    status = 2;
+  } else {
+    status = 3;
+  }
+  #endif
 
   vector<NNOutput*> outputBuf;
 

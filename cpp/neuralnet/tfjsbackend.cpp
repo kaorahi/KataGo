@@ -224,22 +224,19 @@ ComputeHandle* NeuralNet::createComputeHandle(
   bool useFP16,
   bool cudaUseNHWC
 ) {
-  (void)context;
-  (void)loadedModel;
-  (void)logger;
   (void)maxBatchSize;
-  (void)nnXLen;
-  (void)nnYLen;
   (void)requireExactNNLen;
   (void)inputsUseNHWC;
   (void)gpuIdxForThisThread;
   (void)useFP16;
   (void)cudaUseNHWC;
   setBackend(context->backend);
-  if (downloadModel((int)loadedModel->name.c_str()) != 1) {
+  if (downloadModel((int)loadedModel->name.c_str()) == 1) {
+    return new ComputeHandle(loadedModel, nnXLen, nnYLen);
+  } else {
     logger->write("Failed downloadModel");
+    return NULL;
   }
-  return new ComputeHandle(loadedModel, nnXLen, nnYLen);
 }
 
 void NeuralNet::freeComputeHandle(ComputeHandle* gpuHandle) {
