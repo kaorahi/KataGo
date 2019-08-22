@@ -833,10 +833,8 @@ int MainCmds::gtp(int argc, const char* const* argv) {
   }
   #if defined(__EMSCRIPTEN__)
   while (engine->nnEval->status <= 1) {
-    cerr << "pass" << endl;
     emscripten_sleep(100);
   }
-  cerr << engine->nnEval->status << endl;
   notifyStatus(engine->nnEval->status == 2 ? 1 : -1);
   #endif
 

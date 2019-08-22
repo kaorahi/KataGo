@@ -2,7 +2,7 @@
 
 mergeInto(LibraryManager.library, {
     notifyStatus: function(status) {
-        enableInput(status); // cannot pass directly since enableInput would be defined dynamically.
+        katagoStatusHandler(status); // cannot pass directly since enableInput would be defined dynamically.
     },
     $stdio_support__postset: 'stdio_support();',
     $stdio_support: function() {
