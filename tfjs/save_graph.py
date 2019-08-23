@@ -7,10 +7,6 @@ sys.path.append('../python')
 import common
 from model import Model
 
-if tf.__version__ != "1.13.1":
-    print("use tensorflow 1.13.1 or earlier since TensorFlow 1.14.0 uses BatchMatMulV2 but TensorFlow.js 1.2.6 does not support it yet.")
-    sys.exit()
-
 if __name__ == '__main__':
     pos_len = 19
     description = """
