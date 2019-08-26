@@ -192,7 +192,7 @@ ComputeContext* NeuralNet::createComputeContext(
 }
 
 void NeuralNet::freeComputeContext(ComputeContext* computeContext) {
-  assert(computeContext == NULL);
+  (void)computeContext;
 }
 
 LoadedModel* NeuralNet::loadModelFile(const string& file, int modelFileIdx) {

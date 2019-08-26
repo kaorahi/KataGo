@@ -53,7 +53,7 @@ GraphModelWrapper.prototype.downloadModel = function(charp) {
 };
 
 GraphModelWrapper.prototype.removeModel = function() {
-
+    this.model = null;
 };
 
 GraphModelWrapper.prototype.predict = function(

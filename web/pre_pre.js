@@ -1,3 +1,20 @@
+function testLoadsgf() {
+    const sgfFile = "tmp.sgf";
+    FS.createPreloadedFile(
+        FS.cwd(),
+        sgfFile,
+        sgfFile,
+        true, // 読み込み許可
+        false // 書き込み許可
+    );
+    setTimeout(function() {
+        const input = document.getElementById("input");
+        const command = input.command;
+        command.value = "loadsgf tmp.sgf";
+        input.dispatchEvent(new CustomEvent("submit"));
+    }, 1000);
+}
+
 // status-  1: ready, -1: fail
 function katagoStatusHandler(status) {
     const command = document.getElementById("input").command
@@ -6,6 +23,7 @@ function katagoStatusHandler(status) {
         command.removeAttribute("disabled");
         command.setAttribute("placeholder", "GTP command");
         command.focus();
+        testLoadsgf();
         break;
         case -1:
         command.setAttribute("placeholder", "Engine failed loading a weight");
