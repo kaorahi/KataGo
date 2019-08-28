@@ -58,6 +58,11 @@ struct LoadedModel {
   string name;
 
   LoadedModel(const string& fileName) {
+    /* emscripten note:
+       This constructor is called in main thread.
+       But the instance is actually used in NNEvaluator thread.
+       So you need to load the tfjs model in NNEvaluator thread.
+    */
     name = fileName;
     modelDesc.version = 5;
     modelDesc.numInputChannels = 22;
@@ -346,8 +351,8 @@ void NeuralNet::getOutput(
     if(output->whiteOwnerMap != NULL) {
       assert(gpuHandle->model->modelDesc.numOwnershipChannels == 1);
       std::copy(
-        ownership + row * nnXLen * nnYLen,
-        ownership + (row+1) * nnXLen * nnYLen,
+        ownership,
+        ownership + nnXLen * nnYLen,
         output->whiteOwnerMap
       );
     }
