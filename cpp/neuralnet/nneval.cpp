@@ -423,6 +423,28 @@ void NNEvaluator::serve(
       unique_lock<std::mutex> resultLock(resultBuf->resultMutex);
       assert(resultBuf->hasResult == false);
       resultBuf->result = std::shared_ptr<NNOutput>(outputBuf[row]);
+      // Cheat for keeping black uneasy in handicapped games:
+      // Let P = \sum_k blackOwner_k and Q = \sum_k abs(blackOwner_k)
+      // for k = 1, 2, ..., 361.
+      // To keep the game complicated, white hopes to minimize Q
+      // in addition to P.
+      // So the following code replaces scoreMean with
+      // (P+Q)/2 shamelessly.
+      // Note that (x+abs(x))/2 = x (x>0), 0 (x<=0) in general.
+      // (Fix me: Model version 6 is assumed.)
+      const float huge_score = 30.0, model_ver6_scale = 20.0;
+      const bool cheating =
+        abs(resultBuf->result->whiteScoreMean * model_ver6_scale) > huge_score;
+      if (cheating && resultBuf->result->whiteOwnerMap) {
+        std::shared_ptr<NNOutput> r = resultBuf->result;
+        float ownerSum = 0.0;
+        for (int k = 0; k < r->nnXLen * r->nnYLen; k++) {
+          float owner = r->whiteOwnerMap[k];
+          float advantageous = r->whiteScoreMean > 0 ? 1 : -1;
+          ownerSum += (owner * advantageous > 0 ? owner : 0);
+        }
+        resultBuf->result->whiteScoreMean = ownerSum / model_ver6_scale;
+      }
       resultBuf->hasResult = true;
       resultBuf->clientWaitingForResult.notify_all();
       resultLock.unlock();
