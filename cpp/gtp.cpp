@@ -1186,6 +1186,8 @@ int MainCmds::gtp(int argc, const char* const* argv) {
         bool debug = command == "genmove_debug" || command == "search_debug";
         bool playChosenMove = command != "search_debug";
 
+        // Force OwnerMap for the cheat in nneval.cpp.
+        engine->bot->setAlwaysIncludeOwnerMap(true);
         engine->genMove(
           pla,
           logger,searchFactorWhenWinningThreshold,searchFactorWhenWinning,
