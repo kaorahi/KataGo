@@ -7,7 +7,7 @@ KataGo powered by WebAssembly
 ```sh
 mkdir models
 cd models
-curl -O https://github.com/lightvector/KataGo/releases/download/v1.1/g104-b6c96-s97778688-d23397744.zip
+curl -OL https://github.com/lightvector/KataGo/releases/download/v1.1/g104-b6c96-s97778688-d23397744.zip
 unzip g104-b6c96-s97778688-d23397744.zip
 cd ../tfjs
 # in disposable Python environment
