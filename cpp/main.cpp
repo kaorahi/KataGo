@@ -61,8 +61,10 @@ static int handleSubcommand(const string& subcommand, int argc, const char* argv
   if(subcommand == "evalsgf")
     return MainCmds::evalsgf(argc-1,&argv[1]);
   #if !defined(__EMSCRIPTEN__)
+  #if !defined(USE_TFC_BACKEND)
   else if(subcommand == "gatekeeper")
     return MainCmds::gatekeeper(argc-1,&argv[1]);
+  #endif
   #endif
   else if(subcommand == "gtp")
     return MainCmds::gtp(argc-1,&argv[1]);
@@ -71,6 +73,7 @@ static int handleSubcommand(const string& subcommand, int argc, const char* argv
   else if(subcommand == "match")
     return MainCmds::match(argc-1,&argv[1]);
   #if !defined(__EMSCRIPTEN__)
+  #if !defined(USE_TFC_BACKEND)
   else if(subcommand == "matchauto")
     return MainCmds::matchauto(argc-1,&argv[1]);
   else if(subcommand == "selfplay")
@@ -91,6 +94,7 @@ static int handleSubcommand(const string& subcommand, int argc, const char* argv
     return MainCmds::runselfplayinittests(argc-1,&argv[1]);
   else if(subcommand == "runnnonmanyposestest")
     return MainCmds::runnnonmanyposestest(argc-1,&argv[1]);
+  #endif
   #endif
   else if(subcommand == "lzcost")
     return MainCmds::lzcost(argc-1,&argv[1]);

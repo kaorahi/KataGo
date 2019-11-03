@@ -83,6 +83,16 @@ if(BUILD_MCTS)
     set(NEURALNET_BACKEND_SOURCES
       neuralnet/tfjsbackend.cpp
       )
+  elseif(USE_BACKEND STREQUAL "TFC")
+    message("-DUSE_BACKEND=TFC, using TensorFlow (C API) backend")
+    set(NEURALNET_BACKEND_SOURCES
+      neuralnet/tfcbackend.cpp
+      cppflow/src/Model.cpp
+      cppflow/src/Tensor.cpp
+      # need to cancel comment out in "add_executable(katago ...)" below
+      # for building katago
+      dataio/lzparse.cpp
+      )
   elseif(USE_BACKEND STREQUAL "")
     message(WARNING "${ColorBoldRed}WARNING: Using dummy neural net backend, intended for non-neural-net testing only, will fail on any code path requiring a neural net. To use neural net, specify -DUSE_BACKEND=CUDA or -DUSE_BACKEND=OPENCL to compile with the respective backend.${ColorReset}")
     set(NEURALNET_BACKEND_SOURCES neuralnet/dummybackend.cpp)
@@ -188,7 +198,7 @@ endif()
 #------------------------------------------------------------------------------------
 
 if(BUILD_MCTS)
-  if (USE_BACKEND STREQUAL "TFJS")
+  if ((USE_BACKEND STREQUAL "TFJS") OR (USE_BACKEND STREQUAL "TFC"))
     add_executable(katago
       core/global.cpp
       core/config_parser.cpp
@@ -342,6 +352,8 @@ if(BUILD_MCTS)
     target_link_libraries (katago ${OpenCL_LIBRARY})
   elseif(USE_BACKEND STREQUAL "TFJS")
     target_compile_definitions(katago PRIVATE USE_TFJS_BACKEND)
+  elseif(USE_BACKEND STREQUAL "TFC")
+    target_compile_definitions(katago PRIVATE USE_TFC_BACKEND)
   endif()
 
   if(NO_GIT_REVISION)
@@ -451,6 +463,11 @@ if(USE_BACKEND STREQUAL "TFJS")
 
     set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -s DEMANGLE_SUPPORT=1")
     set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} --pre-js ${CMAKE_SOURCE_DIR}/pre.js --js-library ${CMAKE_SOURCE_DIR}/tfjs_api.js")
+endif()
+
+if(USE_BACKEND STREQUAL "TFC")
+  include_directories(${CMAKE_SOURCE_DIR}/cppflow/include ${CMAKE_SOURCE_DIR}/../tfc/libtensorflow/include)
+  set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -L${CMAKE_SOURCE_DIR}/../tfc/libtensorflow/lib -ltensorflow -Wl,-rpath=${CMAKE_SOURCE_DIR}/../tfc/libtensorflow/lib")
 endif()
 
 target_include_directories(katago PUBLIC ${CMAKE_CURRENT_BINARY_DIR})
