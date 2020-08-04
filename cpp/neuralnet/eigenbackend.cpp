@@ -273,19 +273,28 @@ struct ConvLayer {
   }
 
   void apply(CONSTTENSORMAP4* input, TENSORMAP4* output, bool accumulate) const {
-    auto padded = input->pad(paddings);
     assert(output->dimension(0) == outChannels);
+    int w = input->dimension(1), h = input->dimension(2);
+    int paddingX = paddings[1].first, paddingY = paddings[2].first;
     for(int n = 0; n < input->dimension(3); n++) {
-      auto inN = padded.chip(n, 3);
       for(int oc = 0; oc < outChannels; oc++) {
         TENSOR2 sum(input->dimension(1), input->dimension(2));
         sum.setZero();
 
         for(int ic = 0; ic < inChannels; ic++) {
-          Eigen::array<ptrdiff_t, 2> dims({0, 1});
-          auto kChip = kernel.chip(oc, 3).chip(ic, 2);
-          auto inNC = inN.chip(ic, 0);
-          sum += inNC.convolve(kChip, dims);
+          for (int x = 0; x < w; x++) {
+            for (int y = 0; y < h; y++) {
+              for (int dx = 0; dx < kernel.dimension(0); dx++) {
+                int ix = x + dx - paddingX;
+                if (ix < 0 || ix >= w) continue;
+                for (int dy = 0; dy < kernel.dimension(1); dy++) {
+                  int iy = y + dy - paddingY;
+                  if (iy < 0 || iy >= h) continue;
+                  sum(x, y) += (*input)(ic, ix, iy, n) * kernel(dx, dy, ic, oc);
+                }
+              }
+            }
+          }
         }
 
         if(accumulate)
