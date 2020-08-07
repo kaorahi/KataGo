@@ -236,7 +236,6 @@ static void poolRowsValueHead(CONSTTENSORMAP4* in, TENSORMAP2* out, const float*
 struct ConvLayer {
   string name;
 
-  Eigen::array<pair<int, int>, 4> paddings;
   TENSOR2 cooked_kernel;
   int k_w, k_h, k_ic, k_oc, vector_size;
   int inChannels, outChannels;
