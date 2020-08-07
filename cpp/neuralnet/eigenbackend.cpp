@@ -5,7 +5,7 @@
  * Only supports float32 computation with NHWC memory layout (at runtime and as input).
  */
 
-// CR lpuchallafiore: Add multi-threading support (see "Evaluating with a Thread Pool" in the Eigen Tensor docs).
+#define EIGEN_USE_THREADS
 
 #include "../neuralnet/nninterface.h"
 
@@ -43,6 +43,9 @@ using Eigen::TensorMap;
 #define CONSTTENSORMAP3 const TensorMap<Tensor<SCALAR, 3>>
 #define CONSTTENSORMAP4 const TensorMap<Tensor<SCALAR, 4>>
 
+int num_eigen_threads = 8;
+Eigen::ThreadPool thread_pool(num_eigen_threads);
+Eigen::ThreadPoolDevice device(&thread_pool, num_eigen_threads);
 
 // Debugging -----------------------------------------------------------------------------------------------------------
 // #define DEBUG true
@@ -285,7 +288,9 @@ struct ConvLayer {
     Eigen::array<int, 4> output_shape({k_oc, i_w, i_h, i_n});
     auto cooked_input = input->extract_image_patches(k_w, k_h)
       .reshape(as_col_vectors);
-    auto convolution = cooked_kernel.contract(cooked_input, as_matrix_product)
+    TENSOR4 convolution(k_oc, i_w, i_h, i_n);
+    convolution.device(device) = cooked_kernel
+      .contract(cooked_input, as_matrix_product)
       .reshape(output_shape);
     if(accumulate)
       *output += convolution;
