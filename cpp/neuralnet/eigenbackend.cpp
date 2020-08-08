@@ -276,9 +276,9 @@ struct ConvLayer {
     assert(output->dimension(0) == outChannels);
     auto convolution = Eigen::SpatialConvolution(*input, cooked_kernel);
     if(accumulate)
-      (*output).device(device) += convolution;
+      output->device(device) += convolution;
     else
-      (*output).device(device) = convolution;
+      output->device(device) = convolution;
   }
 };
 
