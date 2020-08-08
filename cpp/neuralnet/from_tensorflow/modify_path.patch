@@ -1,0 +1,24 @@
+diff -uprN tensorflow-2.3.0/tensorflow/core/kernels/eigen_convolution_helpers.h tensorflow-2.3.0_patched/tensorflow/core/kernels/eigen_convolution_helpers.h
+--- tensorflow-2.3.0/tensorflow/core/kernels/eigen_convolution_helpers.h
++++ tensorflow-2.3.0_patched/tensorflow/core/kernels/eigen_convolution_helpers.h
+@@ -16,7 +16,7 @@ limitations under the License.
+ #ifndef TENSORFLOW_CORE_KERNELS_EIGEN_CONVOLUTION_HELPERS_H_
+ #define TENSORFLOW_CORE_KERNELS_EIGEN_CONVOLUTION_HELPERS_H_
+ 
+-#include "third_party/eigen3/unsupported/Eigen/CXX11/Tensor"
++#include <unsupported/Eigen/CXX11/Tensor>
+ 
+ namespace Eigen {
+ namespace internal {
+diff -uprN tensorflow-2.3.0/tensorflow/core/kernels/eigen_spatial_convolutions-inl.h tensorflow-2.3.0_patched/tensorflow/core/kernels/eigen_spatial_convolutions-inl.h
+--- tensorflow-2.3.0/tensorflow/core/kernels/eigen_spatial_convolutions-inl.h
++++ tensorflow-2.3.0_patched/tensorflow/core/kernels/eigen_spatial_convolutions-inl.h
+@@ -16,7 +16,7 @@ limitations under the License.
+ #ifndef TENSORFLOW_CORE_KERNELS_EIGEN_SPATIAL_CONVOLUTIONS_INL_H_
+ #define TENSORFLOW_CORE_KERNELS_EIGEN_SPATIAL_CONVOLUTIONS_INL_H_
+ 
+-#include "tensorflow/core/kernels/eigen_convolution_helpers.h"
++#include "eigen_convolution_helpers.h"
+ 
+ // Note this header is used in both TF and TFLite.
+ namespace Eigen {

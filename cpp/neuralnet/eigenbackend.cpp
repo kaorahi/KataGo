@@ -5,7 +5,7 @@
  * Only supports float32 computation with NHWC memory layout (at runtime and as input).
  */
 
-// CR lpuchallafiore: Add multi-threading support (see "Evaluating with a Thread Pool" in the Eigen Tensor docs).
+#define EIGEN_USE_THREADS
 
 #include "../neuralnet/nninterface.h"
 
@@ -17,6 +17,8 @@
 #include "../neuralnet/modelversion.h"
 #include "../neuralnet/nninputs.h"
 #include "../neuralnet/nneval.h"
+
+#include "from_tensorflow/tensorflow-2.3.0/tensorflow/core/kernels/eigen_spatial_convolutions-inl.h"
 
 using namespace std;
 using Eigen::Tensor;
@@ -43,6 +45,9 @@ using Eigen::TensorMap;
 #define CONSTTENSORMAP3 const TensorMap<Tensor<SCALAR, 3>>
 #define CONSTTENSORMAP4 const TensorMap<Tensor<SCALAR, 4>>
 
+int num_eigen_threads = 8;
+Eigen::ThreadPool thread_pool(num_eigen_threads);
+Eigen::ThreadPoolDevice device(&thread_pool, num_eigen_threads);
 
 // Debugging -----------------------------------------------------------------------------------------------------------
 // #define DEBUG true
@@ -236,8 +241,7 @@ static void poolRowsValueHead(CONSTTENSORMAP4* in, TENSORMAP2* out, const float*
 struct ConvLayer {
   string name;
 
-  Eigen::array<pair<int, int>, 4> paddings;
-  TENSOR4 kernel;
+  TENSOR4 cooked_kernel;
   int inChannels, outChannels;
 
   ConvLayer() = delete;
@@ -253,8 +257,6 @@ struct ConvLayer {
     //Currently eigen impl doesn't support dilated convs
     int dilationY = desc.dilationY;
     int dilationX = desc.dilationX;
-    int paddingX = (convXSize / 2) * dilationX;
-    int paddingY = (convYSize / 2) * dilationY;
 
     if(dilationX != 1 || dilationY != 1)
       throw StringError("Eigen backend: Encountered convolution dilation factors other than 1, not supported");
@@ -262,38 +264,21 @@ struct ConvLayer {
     assert(convXSize % 2 == 1);
     assert(convYSize % 2 == 1);
 
-    paddings[0] = make_pair(0, 0);                // C
-    paddings[1] = make_pair(paddingX, paddingX);  // W
-    paddings[2] = make_pair(paddingY, paddingY);  // H
-    paddings[3] = make_pair(0, 0);                // N
-
     // CR-someday lpuchallafiore: optimize NHWC vs NCHW, etc.
+    TENSOR4 kernel;
     kernel = TensorMap<const Tensor<const SCALAR, 4>>(
       desc.weights.data(), convXSize, convYSize, inChannels, outChannels);
+    Eigen::array<int, 4> matched_order({3, 2, 0, 1});
+    cooked_kernel = kernel.shuffle(matched_order);
   }
 
   void apply(CONSTTENSORMAP4* input, TENSORMAP4* output, bool accumulate) const {
-    auto padded = input->pad(paddings);
     assert(output->dimension(0) == outChannels);
-    for(int n = 0; n < input->dimension(3); n++) {
-      auto inN = padded.chip(n, 3);
-      for(int oc = 0; oc < outChannels; oc++) {
-        TENSOR2 sum(input->dimension(1), input->dimension(2));
-        sum.setZero();
-
-        for(int ic = 0; ic < inChannels; ic++) {
-          Eigen::array<ptrdiff_t, 2> dims({0, 1});
-          auto kChip = kernel.chip(oc, 3).chip(ic, 2);
-          auto inNC = inN.chip(ic, 0);
-          sum += inNC.convolve(kChip, dims);
-        }
-
-        if(accumulate)
-          output->chip(n, 3).chip(oc, 0) += sum;
-        else
-          output->chip(n, 3).chip(oc, 0) = sum;
-      }
-    }
+    auto convolution = Eigen::SpatialConvolution(*input, cooked_kernel);
+    if(accumulate)
+      (*output).device(device) += convolution;
+    else
+      (*output).device(device) = convolution;
   }
 };
 
