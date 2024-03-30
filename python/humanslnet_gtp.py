@@ -264,16 +264,19 @@ def responses_for_metas(changes):
         tmp_meta_param.update(change)
         client.set_sgfmeta(make_sgfmeta(tmp_meta_param))
         client.refresh_model()
-        responses.append(client.latest_model_response)
+        res = client.latest_model_response
+        extra = {'gtp_moves_and_probs0': gtp_moves_and_probs0(res)}
+        responses.append(res | extra)
     client.set_sgfmeta(make_sgfmeta(meta_param))
     return responses
 
-def best_move_and_prior(response):
+def gtp_moves_and_probs0(response):
     gs = client.get_game_state()
     items = response["moves_and_probs0"]
-    loc, prior = max(items, key=lambda mp: mp[1])
-    move = str_coord(loc,gs.board)
-    return [move, prior]
+    return [[str_coord(loc,gs.board), prior] for loc, prior in items]
+
+def best_move_and_prior(response):
+    return max(response["gtp_moves_and_probs0"], key=lambda mp: mp[1])
 
 # GTP Implementation -----------------------------------------------------
 
@@ -296,6 +299,7 @@ known_commands = [
     # additional commands
     'undo',
     'lz-analyze',
+    'hs-query-for-metas',
     'hs-best-moves-for-metas',
     *setmeta_command_aliases,
 ]
@@ -378,6 +382,9 @@ while True:
         value = outputs["value"]
         gs = client.get_game_state()
         ret = '\n' + lz_analyze_output(items, value, gs)
+    elif command[0] == "hs-query-for-metas":
+        changes = json.loads(' '.join(command[1:]))
+        ret = json.dumps(responses_for_metas(changes))
     elif command[0] == "hs-best-moves-for-metas":
         # example: get the best moves and priors for KGS 20k, KGS 1d, and OGS 1d
         # (command)
