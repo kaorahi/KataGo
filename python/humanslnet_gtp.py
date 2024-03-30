@@ -252,6 +252,29 @@ def lz_analyze_output(items, value, gs):
     infos = [f'info move {move[k]} visits {visits[k]} winrate {winrate10k} lcb {winrate10k} prior {prior10k[k]} order {k} pv {move[k]}' for k in range(len(items))]
     return ' '.join(infos)
 
+def best_moves_for_metas(changes):
+    responses = responses_for_metas(changes)
+    return [best_move_and_prior(res) for res in responses]
+
+def responses_for_metas(changes):
+    tmp_meta_param = meta_param
+    gs = client.get_game_state()
+    responses = []
+    for change in changes:
+        tmp_meta_param.update(change)
+        client.set_sgfmeta(make_sgfmeta(tmp_meta_param))
+        client.refresh_model()
+        responses.append(client.latest_model_response)
+    client.set_sgfmeta(make_sgfmeta(meta_param))
+    return responses
+
+def best_move_and_prior(response):
+    gs = client.get_game_state()
+    items = response["moves_and_probs0"]
+    loc, prior = max(items, key=lambda mp: mp[1])
+    move = str_coord(loc,gs.board)
+    return [move, prior]
+
 # GTP Implementation -----------------------------------------------------
 
 # Adapted from https://github.com/pasky/michi/blob/master/michi.py, which is distributed under MIT license
@@ -273,6 +296,7 @@ known_commands = [
     # additional commands
     'undo',
     'lz-analyze',
+    'hs-best-moves-for-metas',
     *setmeta_command_aliases,
 ]
 
@@ -354,6 +378,14 @@ while True:
         value = outputs["value"]
         gs = client.get_game_state()
         ret = '\n' + lz_analyze_output(items, value, gs)
+    elif command[0] == "hs-best-moves-for-metas":
+        # example: get the best moves and priors for KGS 20k, KGS 1d, and OGS 1d
+        # (command)
+        # hs-best-moves-for-metas [{"source": "kgs", "rank": "20k"}, {"rank": "1d"}, {"source": "ogs"}]
+        # (response)
+        # = [["Q10", 0.24974609911441803], ["Q10", 0.303322434425354], ["F3", 0.33612844347953796]]
+        changes = json.loads(' '.join(command[1:]))
+        ret = json.dumps(best_moves_for_metas(changes))
     elif command[0] in setmeta_command_aliases:
         pairs = [command[i:i+2] for i in range(1, len(command), 2)]
         for key, value in pairs:
