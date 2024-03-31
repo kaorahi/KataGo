@@ -83,7 +83,7 @@ class GoClient():
         self.start_server()
 
     def start_server(self):
-        print(f"Starting server with command: {self.server_command}")
+        print(f"Starting server with command: {self.server_command}", file=sys.stderr)
         self.server_process = subprocess.Popen(
             self.server_command,
             stdin=subprocess.PIPE,
@@ -100,7 +100,7 @@ class GoClient():
                     returncode = self.server_process.poll()
                     if returncode is not None:
                         return
-                print(line,end="")
+                print(line,end="", file=sys.stderr)
 
         t = Thread(target=print_stderr)
         t.daemon = True
@@ -125,7 +125,7 @@ class GoClient():
         self.server_process.stdin.flush()
 
     def receive_response(self):
-        print(f"Waiting for response")
+        print(f"Waiting for response", file=sys.stderr)
         while True:
             returncode = self.server_process.poll()
             if returncode is not None:
@@ -138,7 +138,7 @@ class GoClient():
         return json.loads(response)
 
     def handle_error(self, error_message):
-        print(f"Error: {error_message}")
+        print(f"Error: {error_message}", file=sys.stderr)
         self.server_process.terminate()
 
         sys.exit(1)
@@ -206,7 +206,7 @@ if len(server_command) >= 2 and server_command[0] == "-meta":
     server_command = server_command[2:]
 
 if not server_command:
-    print("Usage: python humanslnet_gui.py [-meta 'KEY=VAL,KEY=VAL,...'] <server_command>")
+    print("Usage: python humanslnet_gui.py [-meta 'KEY=VAL,KEY=VAL,...'] <server_command>", file=sys.stderr)
     sys.exit(1)
 
 if param_str is not None:
