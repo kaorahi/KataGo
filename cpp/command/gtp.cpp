@@ -3301,10 +3301,16 @@ int MainCmds::gtp(const vector<string>& args) {
         responseIsError = true;
         response = "Expected one argument 'all' or symmetry index [0-7] for kata-raw-human-nn but got '" + Global::concat(pieces," ") + "'";
       }
+      else if(!cfg.contains("humanSLProfile")) {
+        responseIsError = true;
+        response = "Did you specify humanSLProfile=... in katago's config?";
+      }
       else {
         double policyOptimism = engine->getGenmoveParams().rootPolicyOptimism;
         const bool useHumanModel = true;
         response = engine->rawNN(whichSymmetry, policyOptimism, useHumanModel);
+        if(response.empty())
+          responseIsError = true;
       }
     }
 
