@@ -1976,7 +1976,7 @@ int MainCmds::gtp(const vector<string>& args) {
   if(cleanupBeforePass == enabled_t::True && friendlyPass == enabled_t::True)
     throw StringError("Cannot specify both cleanupBeforePass = true and friendlyPass = true at the same time");
 
-  const bool allowResignation = cfg.contains("allowResignation") ? cfg.getBool("allowResignation") : false;
+  bool allowResignation = cfg.contains("allowResignation") ? cfg.getBool("allowResignation") : false;
   const double resignThreshold = cfg.contains("allowResignation") ? cfg.getDouble("resignThreshold",-1.0,0.0) : -1.0; //Threshold on [-1,1], regardless of winLossUtilityFactor
   const int resignConsecTurns = cfg.contains("resignConsecTurns") ? cfg.getInt("resignConsecTurns",1,100) : 3;
   const double resignMinScoreDifference = cfg.contains("resignMinScoreDifference") ? cfg.getDouble("resignMinScoreDifference",0.0,1000.0) : -1e10;
@@ -2461,6 +2461,7 @@ int MainCmds::gtp(const vector<string>& args) {
       paramsList.push_back("genmoveAntiMirror");
       paramsList.push_back("antiMirror");
       paramsList.push_back("humanSLProfile");
+      paramsList.push_back("allowResignation");
       nlohmann::json params = engine->getGenmoveParams().changeableParametersToJson();
       for(auto& elt : params.items()) {
         paramsList.push_back(elt.key());
@@ -2487,6 +2488,8 @@ int MainCmds::gtp(const vector<string>& args) {
         else if(pieces[0] == "humanSLProfile") {
           response = cfg.contains("humanSLProfile") ? cfg.getString("humanSLProfile") : "";
         }
+        else if(pieces[0] == "allowResignation")
+          response = Global::boolToString(allowResignation);
         else {
           nlohmann::json params = engine->getGenmoveParams().changeableParametersToJson();
           if(params.find(pieces[0]) == params.end()) {
@@ -2532,6 +2535,7 @@ int MainCmds::gtp(const vector<string>& args) {
       params["genmoveAntiMirror"] = Global::boolToString(genmoveParams.antiMirror);
       params["antiMirror"] = Global::boolToString(analysisParams.antiMirror);
       params["humanSLProfile"] = cfg.contains("humanSLProfile") ? cfg.getString("humanSLProfile") : "";
+      params["allowResignation"] = Global::boolToString(allowResignation);
       response = params.dump();
     }
     else if(command == "kata-set-param" || command == "kata-set-params") {
@@ -2591,6 +2595,9 @@ int MainCmds::gtp(const vector<string>& args) {
 
             vector<string> unusedKeys = cleanCfg.unusedKeys();
             for(const string& unused: unusedKeys) {
+              if(unused == "allowResignation" && Global::tryStringToBool(overrideSettings["allowResignation"],allowResignation)) {
+                continue;
+              }
               throw StringError("Unrecognized or non-overridable parameter in kata-set-params: " + unused);
             }
             ostringstream out;
