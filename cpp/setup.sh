@@ -1,0 +1,2 @@
+mkdir -p build
+cmake . -B build -DCMAKE_TOOLCHAIN_FILE=${ANDROID_NDK_HOME}/build/cmake/android.toolchain.cmake -DCMAKE_BUILD_TYPE=Release -DANDROID_NATIVE_API_LEVEL=33 -DANDROID_NDK=${ANDROID_NDK_HOME} -DANDROID_ABI=armeabi-v7a  -DUSE_BACKEND=EIGEN

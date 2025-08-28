@@ -11,6 +11,10 @@ include_directories(external)
 include_directories(external/tclap-1.2.2/include)
 include_directories(SYSTEM external/filesystem-1.5.8/include) #SYSTEM suppresses a few warnings
 
+# NDK
+include_directories(SYSTEM external/eigen-3.4.0)
+
+
 #--------------------------- PLATFORM SPECIFIC -------------------------------------------------------------------------
 
 if(APPLE)
@@ -421,9 +425,14 @@ elseif(USE_BACKEND STREQUAL "OPENCL")
 elseif(USE_BACKEND STREQUAL "EIGEN")
   target_compile_definitions(katago PRIVATE USE_EIGEN_BACKEND)
   if(NOT (MSVC))
-    find_package(Eigen3 REQUIRED)
-    include_directories(SYSTEM ${EIGEN3_INCLUDE_DIRS})
-    message(STATUS "Found Eigen3 at ${EIGEN3_INCLUDE_DIRS}")
+    # find_package(Eigen3 REQUIRED)
+    # include_directories(SYSTEM ${EIGEN3_INCLUDE_DIRS})
+    #message(STATUS "Found Eigen3 at ${EIGEN3_INCLUDE_DIRS}")
+    message(STATUS "Skip eigen3 package find")
+    # NDK
+    target_compile_definitions(katago PRIVATE BYTE_ORDER=1234)
+    target_compile_definitions(katago PRIVATE LITTLE_ENDIAN=1234)
+    target_compile_definitions(katago PRIVATE BIG_ENDIAN=4321)
   else()
     if(EIGEN3_INCLUDE_DIRS)
       message(STATUS "EIGEN3_INCLUDE_DIRS is set to ${EIGEN3_INCLUDE_DIRS}, assuming that Eigen3 header files are here.")
