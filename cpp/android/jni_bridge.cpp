@@ -1468,6 +1468,8 @@ Java_io_github_karino2_paoogo_goengine_katago_KataGoNative_analyze (
      std::this_thread::yield();
   }
 
+  g_engine->stopAndWait();
+
   return env->NewStringUTF(g_engine->sstream.str().c_str());
 }
 
