@@ -1436,6 +1436,21 @@ Java_io_github_karino2_paoogo_goengine_katago_KataGoNative_setBoardSize (
   g_engine->setOrResetBoardSize(g_cfg,*g_logger,g_seedRand,boardSize,boardSize);
 }
 
+void
+Java_io_github_karino2_paoogo_goengine_katago_KataGoNative_setGenmoveProfile (
+	JNIEnv*	env,
+	jclass clasz,
+	jstring profile
+	)
+{
+  const char* profileCStr = env->GetStringUTFChars(profile, nullptr);
+  std::string profileS(profileCStr);
+  env->ReleaseStringUTFChars(profile, profileCStr);
+  SearchParams genmoveParams = g_engine->getGenmoveParams();
+  genmoveParams.humanSLProfile = SGFMetadata::getProfile(profileS);
+  g_engine->setGenmoveParamsIfChanged(genmoveParams);
+}
+
 // 固定時間で同期的に振る舞う関数。文字列で結果を返す。
 // lz-analyzeを元にした文字列。
 // [KataGo/docs/GTP_Extensions.md at master · lightvector/KataGo](https://github.com/lightvector/KataGo/blob/master/docs/GTP_Extensions.md)
