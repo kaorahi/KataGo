@@ -1444,8 +1444,10 @@ Java_io_github_karino2_paoogo_goengine_katago_KataGoNative_setGenmoveProfile (
 	)
 {
   const char* profileCStr = env->GetStringUTFChars(profile, nullptr);
+  std::string profileS(profileCStr);
+  env->ReleaseStringUTFChars(profile, profileCStr);
   SearchParams genmoveParams = g_engine->getGenmoveParams();
-  genmoveParams.humanSLProfile = SGFMetadata::getProfile(profileCStr);
+  genmoveParams.humanSLProfile = SGFMetadata::getProfile(profileS);
   g_engine->setGenmoveParamsIfChanged(genmoveParams);
 }
 
