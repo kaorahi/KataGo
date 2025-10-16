@@ -1462,13 +1462,18 @@ Java_io_github_karino2_paoogo_goengine_katago_KataGoNative_analyze (
   args.avoidMoveUntilByLocWhite = vector<int>{};
 
   g_engine->analyze(pla, args);
+  std::this_thread::sleep_for(std::chrono::milliseconds(msec));
 
-  auto start_time = std::chrono::steady_clock::now();
-  while (std::chrono::steady_clock::now() - start_time < std::chrono::milliseconds(msec)) {
-     std::this_thread::yield();
+  string result = "";
+  auto timeout_time = std::chrono::steady_clock::now() + std::chrono::milliseconds(msec * 5);
+  while (std::chrono::steady_clock::now() < timeout_time) {
+    result = g_engine->sstream.str();
+    if (!result.empty() && result.back() == '\n')
+      break;
+    std::this_thread::sleep_for(std::chrono::milliseconds(100));
   }
-
-  return env->NewStringUTF(g_engine->sstream.str().c_str());
+  g_engine->stopAndWait();
+  return env->NewStringUTF(result.c_str());
 }
 
 
