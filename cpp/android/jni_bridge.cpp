@@ -1196,7 +1196,7 @@ static ConfigParser g_cfg;
 static Rand g_seedRand;
 
 // Similar to MainCmds::gtp
-static void JNISetup( int threadNum, const std::string& cfgPath, const std::string& modelPath )
+static void JNISetup( int threadNum, const std::string& cfgPath, const std::string& modelPath, const std::string& humanModelPath )
 {
   Board::initHash();
   ScoreValue::initTables();
@@ -1212,8 +1212,10 @@ static void JNISetup( int threadNum, const std::string& cfgPath, const std::stri
 
   Rules initialRules = Setup::loadSingleRules(cfg, false);
 
-  auto loadParams = [](ConfigParser& config, SearchParams& genmoveOut, SearchParams& analysisOut) {
-    SearchParams params = Setup::loadSingleParams(config,Setup::SETUP_FOR_GTP);
+  const bool hasHumanModel = humanModelPath != "";
+
+  auto loadParams = [&hasHumanModel](ConfigParser& config, SearchParams& genmoveOut, SearchParams& analysisOut) {
+    SearchParams params = Setup::loadSingleParams(config,Setup::SETUP_FOR_GTP,hasHumanModel);
     //Set a default for conservativePass that differs from matches or selfplay
     if(!config.contains("conservativePass"))
       params.conservativePass = true;
@@ -1270,7 +1272,7 @@ static void JNISetup( int threadNum, const std::string& cfgPath, const std::stri
   Player perspective = Setup::parseReportAnalysisWinrates(cfg,C_EMPTY);
 
   g_engine.reset(new GTPEngine(
-    modelPath,"",
+    modelPath,humanModelPath,
     initialGenmoveParams,initialAnalysisParams,
     initialRules,
     assumeMultipleStartingBlackMovesAreHandicap,preventEncore,    dynamicPlayoutDoublingAdvantageCapPerOppLead,
@@ -1302,12 +1304,13 @@ extern "C"
 {
 
 void
-Java_io_github_karino2_paoogo_goengine_katago_KataGoNative_initNative (
+Java_io_github_karino2_paoogo_goengine_katago_KataGoNative_initNativeHum (
 	JNIEnv*	env,
 	jclass clasz,
   jint threadNum,
   jstring cfgPath,
-  jstring modelPath
+  jstring modelPath,
+  jstring humanModelPath
 	)
 {
   if (g_engine.get() != nullptr)
@@ -1321,10 +1324,31 @@ Java_io_github_karino2_paoogo_goengine_katago_KataGoNative_initNative (
   std::string modelPathS(modelCStr);
   env->ReleaseStringUTFChars(modelPath, modelCStr);
 
-  
-  __android_log_print(ANDROID_LOG_VERBOSE, "PaooGo",  "cfg=%s, model=%s", cfgPathS.c_str(), modelPathS.c_str());
+  std::string humanModelPathS;
+  if (humanModelPath == nullptr) {
+    humanModelPathS = "";
+  } else {
+    const char* humanModelCStr = env->GetStringUTFChars(humanModelPath, nullptr);
+    humanModelPathS = humanModelCStr;
+    env->ReleaseStringUTFChars(humanModelPath, humanModelCStr);
+  }
 
-  JNISetup( threadNum, cfgPathS, modelPathS );
+  
+  __android_log_print(ANDROID_LOG_VERBOSE, "PaooGo",  "cfg=%s, model=%s hmodel=%s", cfgPathS.c_str(), modelPathS.c_str(), humanModelPathS.c_str());
+
+  JNISetup( threadNum, cfgPathS, modelPathS, humanModelPathS );
+}
+
+void
+Java_io_github_karino2_paoogo_goengine_katago_KataGoNative_initNative (
+	JNIEnv*	env,
+	jclass clasz,
+  jint threadNum,
+  jstring cfgPath,
+  jstring modelPath
+	)
+{
+  Java_io_github_karino2_paoogo_goengine_katago_KataGoNative_initNativeHum(env, clasz, threadNum, cfgPath, modelPath, nullptr);
 }
 
 void
