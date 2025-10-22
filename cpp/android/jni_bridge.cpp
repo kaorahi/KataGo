@@ -1102,7 +1102,8 @@ struct GTPEngine {
         NNResultBuf buf;
         bool skipCache = true;
         bool includeOwnerMap = true;
-        nnEvalToUse->evaluate(board,hist,nextPla,&analysisParams.humanSLProfile,nnInputParams,buf,skipCache,includeOwnerMap);
+        // In PaooGo, humanSLProfile is not set in analysisParams.
+        nnEvalToUse->evaluate(board,hist,nextPla,&genmoveParams.humanSLProfile,nnInputParams,buf,skipCache,includeOwnerMap);
 
         NNOutput* nnOutput = buf.result.get();
         out << "symmetry " << symmetry << endl;
@@ -1512,6 +1513,19 @@ Java_io_github_karino2_paoogo_goengine_katago_KataGoNative_analyze (
     std::this_thread::sleep_for(std::chrono::milliseconds(100));
   }
   g_engine->stopAndWait();
+  return env->NewStringUTF(result.c_str());
+}
+
+jstring
+Java_io_github_karino2_paoogo_goengine_katago_KataGoNative_rawNN (
+	JNIEnv*	env,
+	jclass clasz,
+	jint whichSymmetry,
+	jdouble policyOptimism,
+	jboolean useHumanModel
+	)
+{
+  string result = g_engine->rawNN(whichSymmetry, policyOptimism, useHumanModel);
   return env->NewStringUTF(result.c_str());
 }
 
