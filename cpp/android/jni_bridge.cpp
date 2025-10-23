@@ -885,7 +885,9 @@ struct GTPEngine {
   void analyze(Player pla, AnalyzeArgs args) {
     clearStream();
     assert(args.analyzing);
-    if(isGenmoveParams) {
+    // if(isGenmoveParams) {
+    if(true) {  // Tentative workaround for slow analysis after board size change
+      analysisParams.humanSLProfile = SGFMetadata::getProfile("_");  // ditto
       bot->setParams(analysisParams);
       isGenmoveParams = false;
     }
