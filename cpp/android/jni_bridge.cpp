@@ -24,7 +24,10 @@
 #include "../program/play.h"
 #include "../main.h"
 
+#include "../external/nlohmann_json/json.hpp"
+
 using namespace std;
+using json = nlohmann::json;
 
 inline void testAssert(bool cond) {}
 
@@ -536,34 +539,23 @@ struct GTPEngine {
     //Avoid capturing anything by reference except [this], since this will potentially be used
     //asynchronously and called after we return
     return [args,pla,this](const Search* search) {
-      vector<AnalysisData> buf;
-      bool duplicateForSymmetries = true;
-      search->getAnalysisData(buf,args.minMoves,false,analysisPVLen,duplicateForSymmetries);
-      filterZeroVisitMoves(args,buf);
-      if(buf.size() > args.maxMoves)
-        buf.resize(args.maxMoves);
-      if(buf.size() <= 0)
-        return;
-
-      const Board board = search->getRootBoard();
-      for(int i = 0; i<buf.size(); i++) {
-        if(i > 0)
-          sstream << ",";
-        const AnalysisData& data = buf[i];
-        double winrate = 0.5 * (1.0 + data.winLossValue);
-        double lcb = PlayUtils::getHackedLCBForWinrate(search,data,pla);
-        if(perspective == P_BLACK || (perspective != P_BLACK && perspective != P_WHITE && pla == P_BLACK)) {
-          winrate = 1.0-winrate;
-          lcb = 1.0 - lcb;
-        }
-        sstream << Location::toString(data.move,board);
-        sstream << " " << round(winrate * 10000.0) << " ";
-        if(preventEncore && data.pvContainsPass())
-          data.writePVUpToPhaseEnd(sstream,board,search->getRootHist(),search->getRootPla());
-        else
-          data.writePV(sstream,board);
-      }
-      sstream << endl;
+      bool preventEncore = true;
+      bool includePolicy = false;
+      bool includeOwnership = false;
+      bool includeOwnershipStdev = false;
+      bool includeMovesOwnership = false;
+      bool includeMovesOwnershipStdev = false;
+      bool includePVVisits = false;
+      json ret;
+      bool success = search->getAnalysisJson(
+          pla, analysisPVLen, preventEncore, includePolicy,
+          includeOwnership, includeOwnershipStdev,
+          includeMovesOwnership, includeMovesOwnershipStdev,
+          includePVVisits,
+          ret
+      );
+      // fixme: check success
+      sstream << ret.dump() << endl;
     };
   }
 
@@ -1478,13 +1470,8 @@ Java_io_github_karino2_paoogo_goengine_katago_KataGoNative_setGenmoveProfile (
 }
 
 // 固定時間で同期的に振る舞う関数。文字列で結果を返す。
-// lz-analyzeを元にした文字列。
-// [KataGo/docs/GTP_Extensions.md at master · lightvector/KataGo](https://github.com/lightvector/KataGo/blob/master/docs/GTP_Extensions.md)
-// winrate: [0, 10000]
-// 先頭が候補手とwinrate、そのあとにpvが続く。空白区切り。
-// pvが終わったらカンマ区切りで次のinfo。
-// 例としては以下のような出力。
-// F4 5506 F4 E2 G4 E7 F7 H3,D6 5546 D6 D7 C7 E6 D5 E7 E5 C8 B7 B8 B6,D7 5341 D7 D6 E6 C7 D8 B4,G5 5099 G5 D2 D7 C7 C3,C5 5092 C5 D7 F4 H5,E3 4829 E3 H5 H6 G5 G6 D7,E7 4955 E7 D7 F4 E2,E5 4706 E5 B4 H4,B5 4847 B5 E5,G4 4320 G4,F3 4450 F3,E2 4238 E2,C7 4212 C7,H5 4164 H5
+// KataGo の analysis コマンドを元にした文字列。
+// https://github.com/lightvector/KataGo/blob/master/docs/Analysis_Engine.md#responses
 jstring
 Java_io_github_karino2_paoogo_goengine_katago_KataGoNative_analyze (
 	JNIEnv*	env,
