@@ -100,7 +100,8 @@ class NNEvaluator {
     const std::vector<int>& gpuIdxByServerThread,
     const std::string& randSeed,
     bool doRandomize,
-    int defaultSymmetry
+    int defaultSymmetry,
+    const std::vector<int>& maxBatchSizeByServerThread = std::vector<int>()
   );
   ~NNEvaluator();
 
@@ -219,6 +220,7 @@ class NNEvaluator {
   const enabled_t usingNHWCMode;
   int numThreads;
   std::vector<int> gpuIdxByServerThread;
+  std::vector<int> maxBatchSizeByServerThread;
   const std::string randSeed;
   const bool debugSkipNeuralNet;
 

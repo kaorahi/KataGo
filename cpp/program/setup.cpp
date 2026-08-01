@@ -263,6 +263,20 @@ vector<NNEvaluator*> Setup::initializeNNEvaluators(
       backendExtraParam += ";openvinoDeviceType=" + cfg.getString("onnxOpenVINODeviceType");
     if(cfg.contains("onnxOpenVINODeviceId"))
       backendExtraParam += ";openvinoDeviceId=" + cfg.getString("onnxOpenVINODeviceId");
+    {
+      set<int> deviceIdxs(gpuIdxByServerThread.begin(),gpuIdxByServerThread.end());
+      for(int deviceIdx : deviceIdxs) {
+        if(deviceIdx < 0)
+          continue;
+        const string deviceIdxStr = Global::intToString(deviceIdx);
+        const string deviceTypeKey = "onnxOpenVINODeviceType" + deviceIdxStr;
+        const string deviceIdKey = "onnxOpenVINODeviceId" + deviceIdxStr;
+        if(cfg.contains(deviceTypeKey))
+          backendExtraParam += ";openvinoDeviceType" + deviceIdxStr + "=" + cfg.getString(deviceTypeKey);
+        if(cfg.contains(deviceIdKey))
+          backendExtraParam += ";openvinoDeviceId" + deviceIdxStr + "=" + cfg.getString(deviceIdKey);
+      }
+    }
     if(cfg.contains("onnxOpenVINOEnableNPUFastCompile"))
       backendExtraParam += ";openvinoEnableNPUFastCompile=" + cfg.getString("onnxOpenVINOEnableNPUFastCompile");
     if(cfg.contains("onnxOpenVINOCacheDir"))
@@ -346,6 +360,19 @@ vector<NNEvaluator*> Setup::initializeNNEvaluators(
     (void)defaultMaxBatchSize;
 #endif
 
+    vector<int> maxBatchSizeByServerThread(numNNServerThreadsPerModel,nnMaxBatchSize);
+    for(int j = 0; j<numNNServerThreadsPerModel; j++) {
+      const string threadIdxStr = Global::intToString(j);
+      const string modelThreadKey = "nnMaxBatchSizeModel" + idxStr + "Thread" + threadIdxStr;
+      const string threadKey = "nnMaxBatchSizeThread" + threadIdxStr;
+      int configuredMaxBatchSize = nnMaxBatchSize;
+      if(cfg.contains(modelThreadKey))
+        configuredMaxBatchSize = cfg.getInt(modelThreadKey,1,65536);
+      else if(cfg.contains(threadKey))
+        configuredMaxBatchSize = cfg.getInt(threadKey,1,65536);
+      maxBatchSizeByServerThread[j] = std::min(configuredMaxBatchSize,nnMaxBatchSize);
+    }
+
     int defaultSymmetry = forcedSymmetry >= 0 ? forcedSymmetry : 0;
     if(disableFP16)
       useFP16Mode = enabled_t::False;
@@ -372,7 +399,8 @@ vector<NNEvaluator*> Setup::initializeNNEvaluators(
       gpuIdxByServerThread,
       nnRandSeed,
       (forcedSymmetry >= 0 ? false : nnRandomize),
-      defaultSymmetry
+      defaultSymmetry,
+      maxBatchSizeByServerThread
     );
 
     nnEval->spawnServerThreads();

@@ -249,6 +249,8 @@ struct ComputeContext {
   string providerName;
   string openvinoDeviceType;
   string openvinoDeviceId;
+  map<int,string> openvinoDeviceTypeByDeviceIdx;
+  map<int,string> openvinoDeviceIdByDeviceIdx;
   bool openvinoEnableNPUFastCompile;
   string openvinoCacheDir;
 
@@ -271,6 +273,8 @@ struct ComputeContext {
       providerName(provider),
       openvinoDeviceType("NPU"),
       openvinoDeviceId(""),
+      openvinoDeviceTypeByDeviceIdx(),
+      openvinoDeviceIdByDeviceIdx(),
       openvinoEnableNPUFastCompile(false),
       openvinoCacheDir(""),
       inputSpatialName("input_spatial"),
@@ -282,6 +286,16 @@ struct ComputeContext {
       outputOwnershipName("out_ownership"),
       configModelVersion(-1)
   {}
+
+  string getOpenVINODeviceType(int deviceIdx) const {
+    const auto iter = openvinoDeviceTypeByDeviceIdx.find(deviceIdx);
+    return iter == openvinoDeviceTypeByDeviceIdx.end() ? openvinoDeviceType : iter->second;
+  }
+
+  string getOpenVINODeviceId(int deviceIdx) const {
+    const auto iter = openvinoDeviceIdByDeviceIdx.find(deviceIdx);
+    return iter == openvinoDeviceIdByDeviceIdx.end() ? openvinoDeviceId : iter->second;
+  }
 };
 
 //--------------------------------------------------------------
@@ -376,10 +390,12 @@ struct ComputeHandle {
       if(logger != NULL)
         logger->write("ONNX backend: MIGraphX execution provider enabled, device_id=" + Global::intToString(migraphxOpts.device_id));
     } else if(provider == "openvino") {
+      const string openvinoDeviceType = ctx->getOpenVINODeviceType(deviceIdxForThread);
+      const string openvinoDeviceId = ctx->getOpenVINODeviceId(deviceIdxForThread);
       std::unordered_map<std::string, std::string> openvinoOpts;
-      openvinoOpts["device_type"] = ctx->openvinoDeviceType;
-      if(!ctx->openvinoDeviceId.empty())
-        openvinoOpts["device_id"] = ctx->openvinoDeviceId;
+      openvinoOpts["device_type"] = openvinoDeviceType;
+      if(!openvinoDeviceId.empty())
+        openvinoOpts["device_id"] = openvinoDeviceId;
       if(!ctx->openvinoCacheDir.empty())
         openvinoOpts["cache_dir"] = ctx->openvinoCacheDir;
 
@@ -413,7 +429,7 @@ struct ComputeHandle {
       if(logger != NULL) {
         string deviceId = openvinoOpts.count("device_id") > 0 ? openvinoOpts["device_id"] : "";
         logger->write(
-          "ONNX backend: OpenVINO execution provider enabled, device_type=" + ctx->openvinoDeviceType +
+          "ONNX backend: OpenVINO execution provider enabled, device_type=" + openvinoDeviceType +
           (deviceId.empty() ? "" : (", device_id=" + deviceId))
         );
       }
@@ -517,7 +533,6 @@ ComputeContext* NeuralNet::createComputeContext(
   enabled_t useNHWCMode,
   const LoadedModel* loadedModel
 ) {
-  (void)gpuIdxs;
   (void)homeDataDirOverride;
   (void)openCLReTunePerBoardSize;
   // useFP16Mode and useNHWCMode are intentionally ignored: ONNX Runtime handles precision
@@ -566,6 +581,17 @@ ComputeContext* NeuralNet::createComputeContext(
   if(params.count("outputOwnership")) ctx->outputOwnershipName = params["outputOwnership"];
   if(params.count("openvinoDeviceType")) ctx->openvinoDeviceType = params["openvinoDeviceType"];
   if(params.count("openvinoDeviceId")) ctx->openvinoDeviceId = params["openvinoDeviceId"];
+  for(int deviceIdx : gpuIdxs) {
+    if(deviceIdx < 0)
+      continue;
+    const string idx = Global::intToString(deviceIdx);
+    const string deviceTypeKey = "openvinoDeviceType" + idx;
+    const string deviceIdKey = "openvinoDeviceId" + idx;
+    if(params.count(deviceTypeKey))
+      ctx->openvinoDeviceTypeByDeviceIdx[deviceIdx] = params[deviceTypeKey];
+    if(params.count(deviceIdKey))
+      ctx->openvinoDeviceIdByDeviceIdx[deviceIdx] = params[deviceIdKey];
+  }
   if(params.count("openvinoEnableNPUFastCompile")) {
     string v = Global::toLower(params["openvinoEnableNPUFastCompile"]);
     ctx->openvinoEnableNPUFastCompile = (v == "1" || v == "true" || v == "yes" || v == "on");
@@ -610,10 +636,12 @@ ComputeHandle* NeuralNet::createComputeHandle(
                   ": Model version " + Global::intToString(loadedModel->modelDesc.modelVersion));
     logger->write("ONNX backend thread " + Global::intToString(serverThreadIdx) +
                   ": Model name: " + loadedModel->modelDesc.name);
-    string deviceInfo =
-      context->providerName == "openvino"
-      ? "n/a (use onnxOpenVINODeviceType/onnxOpenVINODeviceId)"
-      : Global::intToString(gpuIdxForThisThread);
+    string deviceInfo = Global::intToString(gpuIdxForThisThread);
+    if(context->providerName == "openvino") {
+      const string deviceType = context->getOpenVINODeviceType(gpuIdxForThisThread);
+      const string deviceId = context->getOpenVINODeviceId(gpuIdxForThisThread);
+      deviceInfo = deviceType + (deviceId.empty() ? "" : (":" + deviceId));
+    }
     logger->write("ONNX backend thread " + Global::intToString(serverThreadIdx) +
                   ": provider=" + context->providerName +
                   " deviceIdx=" + deviceInfo);
