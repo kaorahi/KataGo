@@ -211,6 +211,16 @@ struct Builder {
     return addNode("Add", {input, bName}, uniq(desc.name), desc.name);
   }
 
+  string buildSGFMetadataEncoder(const string& input, const SGFMetadataEncoderDesc& desc) {
+    string cur = buildMatMul(input, desc.mul1);
+    cur = buildMatBias(cur, desc.bias1);
+    cur = buildActivation(cur, desc.act1);
+    cur = buildMatMul(cur, desc.mul2);
+    cur = buildMatBias(cur, desc.bias2);
+    cur = buildActivation(cur, desc.act2);
+    return buildMatMul(cur, desc.mul3);
+  }
+
   // BatchNorm as per-channel affine: out = input * mergedScale + mergedBias, broadcast over the
   // channel dim. NCHW broadcasts over [1,C,1,1]; NHWC ([N,H,W,C]) over [1,1,1,C].
   string buildBatchNorm(const string& input, const BatchNormLayerDesc& desc, bool useNHWC) {
@@ -822,9 +832,6 @@ Result build(
   Logger* logger,
   bool alignInputsToConsumptionOrder
 ) {
-  if(desc.metaEncoderVersion > 0)
-    throw StringError("OnnxModelBuilder: SGF metadata encoder not yet supported");
-
   if(logger != NULL)
     logger->write("Building internal onnx model, requireExactNNLen=" + Global::boolToString(requireExactNNLen) + " transformerNHWC=" + Global::boolToString(transformerNHWC));
 
@@ -895,12 +902,16 @@ Result build(
   if(alignInputsToConsumptionOrder) {
     addInput("InputSpatial", numInputChannels);
     addInputNC11("InputGlobal", numInputGlobalChannels);
+    if(desc.numInputMetaChannels > 0)
+      addInputNC11("InputMeta", desc.numInputMetaChannels);
     addInput("InputMask", 1);
   }
   else {
     addInput("InputMask", 1);
     addInput("InputSpatial", numInputChannels);
     addInputNC11("InputGlobal", numInputGlobalChannels);
+    if(desc.numInputMetaChannels > 0)
+      addInputNC11("InputMeta", desc.numInputMetaChannels);
   }
 
   // ---- Mask-derived features ----
@@ -961,6 +972,10 @@ Result build(
   string initialConv = b.buildConv("InputSpatial", trunk.initialConv, false);
   string initialMatMul = b.buildMatMul("InputGlobal", trunk.initialMatMul);
   string cur = b.elementwise("Add", initialConv, initialMatMul, trunk.name + "/initbias");
+  if(trunk.metaEncoderVersion > 0) {
+    string initialMeta = b.buildSGFMetadataEncoder("InputMeta", trunk.sgfMetadataEncoder);
+    cur = b.elementwise("Add", cur, initialMeta, trunk.name + "/initmetabias");
+  }
 
   // When transformerNHWC, run the entire trunk block stack channel-last: one NCHW->NHWC conversion
   // here and one NHWC->NCHW conversion before the trunk tip. Every block (convnet/gpool/nbt/
